@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <script src="./js/app.js" defer type="module"></script>
+    <title>Chat Socket io</title>
+</head>
+
+<body>
+    <form id="chat">
+        <div class="messages"></div>
+        <input type="text" id="message" placeholder=" Digite sua mensagem">
+        <button type="submit">Enviar</button>
+    </form>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script>
+
+        let socket = io("http://localhost:8080")
+
+
+        const messages = document.querySelector('.messages')
+
+        // Trate o evento de conexão
+        socket.on('connect', function () {
+            console.log('Conectado ao servidor Socket.io com o ID:', socket.id);
+
+            const room = {
+                serviceMysqlId: 1
+            }
+
+            // Emita a mensagem apenas para a sala correspondente ao serviço
+            socket.emit('class', room);
+        })
+
+        // Adicione um ouvinte para o evento 'disconnect'
+        socket.on('disconnect', function () {
+            console.log('Desconectado do servidor Socket.io');
+        });
+
+        socket.on('push', (data) => {
+            console.log(data);
+            const messagesContainer = document.querySelector('.messages');
+            messagesContainer.innerHTML = ""
+
+            // Iterate through each message in the 'mensagens' array
+            data.mensagens.forEach((messageData) => {
+                // Create a list item for each message
+                const li = document.createElement('li');
+                const container = document.createElement('div')
+                container.className = "container"
+
+                // Create elements for name, photo, and message
+                const senderName = document.createElement('span');
+                const senderPhoto = document.createElement('img');
+                const messageText = document.createElement('span');
+
+                // Set the content and attributes based on messageData
+                senderName.textContent = messageData.sender.name;
+                senderPhoto.src = messageData.sender.photoUrl;
+                messageText.textContent = messageData.message;
+
+                // Append elements to the list item
+                li.appendChild(senderPhoto);
+                li.appendChild(senderName);
+                li.appendChild(messageText);
+
+                // Append the list item to the messages container
+                container.appendChild(li)
+                messagesContainer.appendChild(container);
+            });
+        });
+
+
+        document.getElementById('chat').addEventListener('submit', function (e) {
+            e.preventDefault()
+
+            const message = document.getElementById('message').value
+
+            const newMessage = {
+                "serviceMysqlId": 1,
+                "typeSender": "diarist",
+                "senderId": 1,
+                "typeRecipient": "client",
+                "recipientId": 1,
+                "message": message,
+                "date": "2023/11/01",
+                "hour": "12:00"
+            }
+
+            socket.emit('new-message', newMessage)
+        })
+
+    </script>
+</body>
+
+</html>
